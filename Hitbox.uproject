@@ -1,0 +1,16 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{D9FACFE1-49A6-D340-B61F-C984CB3F7283}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "Hitbox",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	]
+}

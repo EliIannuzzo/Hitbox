@@ -64,7 +64,7 @@ void UHBPlayerCollisionComponent::SubstepTick(float _DeltaTime, FBodyInstance* _
 	//< Update our distance to ground & ground normal. >
 	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(CapsuleComponent->GetScaledCapsuleRadius() * 0.95f), CollisionParams);
 	
-	DistanceToGround = (hit) ? FVector::Distance(start, outHit.ImpactPoint) - CapsuleComponent->GetScaledCapsuleHalfHeight() : 9999;
+	DistanceToGround = (hit) ? start.Z - outHit.ImpactPoint.Z - CapsuleComponent->GetScaledCapsuleHalfHeight() : 9999;
 	Normal = IsGrounded() ? outHit.Normal : FVector::UpVector;
 
 

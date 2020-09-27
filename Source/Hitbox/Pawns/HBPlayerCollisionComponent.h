@@ -9,7 +9,7 @@
 
 class UCapsuleComponent;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class HITBOX_API UHBPlayerCollisionComponent : public UActorComponent
 {
 	GENERATED_BODY()

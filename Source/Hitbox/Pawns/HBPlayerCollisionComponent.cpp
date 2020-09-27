@@ -38,8 +38,6 @@ UHBPlayerCollisionComponent::UHBPlayerCollisionComponent()
 void UHBPlayerCollisionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	
 }
 
 // Called every frame

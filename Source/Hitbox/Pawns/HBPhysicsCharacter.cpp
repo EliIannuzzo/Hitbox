@@ -62,8 +62,8 @@ void AHBPhysicsCharacter::UpdateViewingAngle(float _DeltaTime)
 	float verticalDelta = (lastMouseDelta.Y * 25 * MouseSensitivity) * _DeltaTime;
 
 	//< Rotate Camera (Vertical) >
-	float newPitch = FMath::Clamp(CameraComponent->GetRelativeRotation().Add(verticalDelta, 0, 0).Pitch, -85.0f, 85.0f);
-	CameraComponent->SetRelativeRotation(FRotator(newPitch, 0, 0), false, nullptr);
+	float newPitch = FMath::Clamp(ViewMountComponent->GetRelativeRotation().Add(verticalDelta, 0, 0).Pitch, -85.0f, 85.0f);
+	ViewMountComponent->SetRelativeRotation(FRotator(newPitch, 0, 0), false, nullptr);
 
 	//< Rotate Actor (Horizontal) >
 	AddActorWorldRotation(FRotator(0, horizontalDelta, 0), false);
@@ -97,6 +97,7 @@ void AHBPhysicsCharacter::Input_Jump()
 void AHBPhysicsCharacter::Input_Forward(float _Val)
 {
 	MovementComponent->MovementInput.X = _Val;
+	if (_Val < 0.9f) MovementComponent->SprintActive = false;
 }
 
 void AHBPhysicsCharacter::Input_Right(float _Val)
@@ -118,12 +119,11 @@ void AHBPhysicsCharacter::Input_LookHorizontal(float _Val)
 
 void AHBPhysicsCharacter::Input_SprintUp()
 {
-	MovementComponent->SprintPressed = false;
 }
 
 void AHBPhysicsCharacter::Input_SprintDown()
 {
-	MovementComponent->SprintPressed = true;
+	MovementComponent->SprintActive = true;
 }
 
 void AHBPhysicsCharacter::Input_CrouchUp()

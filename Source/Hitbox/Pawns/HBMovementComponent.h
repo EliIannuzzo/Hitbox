@@ -8,6 +8,7 @@
 #include "HBMovementComponent.generated.h"
 
 class UHBPlayerCollisionComponent;
+class UCurveFloat;
 
 UCLASS()
 class HITBOX_API UHBMovementComponent : public UPawnMovementComponent
@@ -40,9 +41,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float MaxSlopeAngle = 40;
 
-	//< Stick To Ground >
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float StickToGroundForce = 15;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float PlayerRadius = 38;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float PlayerHeight = 176;
 
 private:
 	bool ContactWithGround = true;
@@ -71,7 +77,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float SlideDeceleration = 500;
 
+	UPROPERTY(EditDefaultsOnly, Category = Curve)
+		UCurveFloat* CrouchCurve;
+
+private:
+	float CrouchCurveTimeline = 0;
+
+
 	// Air
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float AirSpeed = 250;
 
@@ -93,12 +107,17 @@ private:
 	FVector2D FindVelRelativeToLook();
 
 	void ApplyFinalVelocity(FBodyInstance* _BodyInstance);
-	float GetTargetSpeed();
+	float GetTargetSpeed(FVector _Direction);
 	float GetCurrentHorizontalSpeed();
 	float GetDeceleration();
 	bool IsSliding();
 	bool CanSlideBoost();
 	void StickToGround(float _DeltaTime);
+
+	void TickCapsuleHeight(float _DeltaTime, FBodyInstance* _BodyInstance);
+
+	void AddTranslation(FBodyInstance* _BodyInstance, FVector _NewWorldTranslation);
+	FVector GetTranslation(FBodyInstance* _BodyInstance);
 
 	FVector NewVelocity;
 
@@ -126,6 +145,6 @@ private:
 
 public:
 	FVector2D MovementInput = FVector2D::ZeroVector;
-	bool SprintPressed = false;
+	bool SprintActive = false;
 	bool CrouchPressed = false;
 };

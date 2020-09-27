@@ -62,6 +62,9 @@ void UHBMovementComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyIns
 		//< Update IsGrounded & ground normal. >
 		CollisionComponent->SubstepTick(_DeltaTime, _BodyInstance);
 
+		//< Used for transitioning between height changes. >
+		TickCapsuleHeight(_DeltaTime, _BodyInstance);
+
 		//< Update "ContactWithGround". >
 		if (CollisionComponent->IsGrounded())
 		{
@@ -116,8 +119,6 @@ void UHBMovementComponent::Input_Jump()
 
 void UHBMovementComponent::Input_CrouchDown()
 {
-	CollisionComponent->CapsuleComponent->SetRelativeScale3D(FVector(1, 1, 0.5f));
-	CollisionComponent->CapsuleComponent->MoveComponent(FVector::DownVector * CollisionComponent->CapsuleComponent->GetUnscaledCapsuleHalfHeight()/2, CollisionComponent->CapsuleComponent->GetComponentTransform().GetRotation(), true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 	CrouchPressed = true;
 
 	//< If crouch while grounded & meeting the speed threshold, perform a slide boost. >
@@ -130,9 +131,6 @@ void UHBMovementComponent::Input_CrouchDown()
 void UHBMovementComponent::Input_CrouchUp()
 {
 	//< If there is space above the player, stand up. >
-	CollisionComponent->CapsuleComponent->SetRelativeScale3D(FVector(1, 1, 1));
-	CollisionComponent->CapsuleComponent->MoveComponent(FVector::UpVector * CollisionComponent->CapsuleComponent->GetUnscaledCapsuleHalfHeight() / 2, CollisionComponent->CapsuleComponent->GetComponentTransform().GetRotation(), true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
-
 	CrouchPressed = false;
 	PerformBoost = false;
 }
@@ -157,6 +155,8 @@ void UHBMovementComponent::GroundMove(float _DeltaTime, FBodyInstance* _BodyInst
 
 			deltaVel = (targetVel - NewVelocity);
 			deltaVel.Z = 0;
+
+			SprintActive = false;
 		}
 		else
 		{
@@ -167,7 +167,7 @@ void UHBMovementComponent::GroundMove(float _DeltaTime, FBodyInstance* _BodyInst
 			}
 			else
 			{
-				targetVel *= GetTargetSpeed();
+				targetVel *= GetTargetSpeed(direction);
 			}
 
 			//< Calculate if we're Accelerating or Decelerating >
@@ -226,9 +226,7 @@ void UHBMovementComponent::Jump(FBodyInstance* _BodyInstance)
 	float PreJumpDistance = CollisionComponent->GroundDistance;
 	if (CollisionComponent->GetDistanceToGround() < 0) PreJumpDistance += FMath::Abs(CollisionComponent->GetDistanceToGround()); //Account for the curvature of our capsule bottom. 
 
-	FTransform transform = _BodyInstance->GetUnrealWorldTransform();
-	transform.SetTranslation(transform.GetTranslation() + (FVector::UpVector * PreJumpDistance));
-	_BodyInstance->SetBodyTransform(transform, ETeleportType::TeleportPhysics);
+	AddTranslation(_BodyInstance, FVector(0, 0, PreJumpDistance));
 
 	//< Perform jump & reset. >
 	NewVelocity.Z = JumpForce;
@@ -270,13 +268,13 @@ void UHBMovementComponent::ApplyFinalVelocity(FBodyInstance* _BodyInstance)
 	_BodyInstance->SetLinearVelocity(NewVelocity, false);
 }
 
-float UHBMovementComponent::GetTargetSpeed()
+float UHBMovementComponent::GetTargetSpeed(FVector _Direction)
 {
 	if (CrouchPressed)
 	{
 		return CrouchSpeed;
 	}
-	if (SprintPressed) return RunSpeed;
+	if (SprintActive && _Direction.X > 0) return RunSpeed;
 
 	return WalkSpeed;
 }
@@ -332,6 +330,40 @@ void UHBMovementComponent::StickToGround(float _DeltaTime)
 {
 	FVector forceToApply = (CollisionComponent->GetNormal() * -1.0f) * (StickToGroundForce + (NewVelocity.Size() / 10)) * 100.0f * _DeltaTime;
 	NewVelocity += forceToApply;
+}
+
+void UHBMovementComponent::TickCapsuleHeight(float _DeltaTime, FBodyInstance* _BodyInstance)
+{
+	float minTime, maxTime;
+	CrouchCurve->GetTimeRange(minTime, maxTime);
+
+	//< Abort if target reached. >
+	float targetTime = (!CrouchPressed) ? minTime : maxTime;
+	if (CrouchCurveTimeline == targetTime) return;
+
+	CrouchCurveTimeline += (CrouchPressed) ? _DeltaTime : -_DeltaTime;
+	CrouchCurveTimeline = FMath::Clamp(CrouchCurveTimeline, minTime, maxTime);
+
+	//< Update height with new value from loaded curve. >
+	float curveValue = CrouchCurve->GetFloatValue(CrouchCurveTimeline);
+	float newHalfHeight = (PlayerHeight * curveValue) / 2;
+	float heightDelta = newHalfHeight - CollisionComponent->CapsuleComponent->GetScaledCapsuleHalfHeight();
+
+	CollisionComponent->CapsuleComponent->SetCapsuleSize(PlayerRadius, newHalfHeight);
+
+	AddTranslation(_BodyInstance, FVector::UpVector * heightDelta);
+}
+
+void UHBMovementComponent::AddTranslation(FBodyInstance* _BodyInstance, FVector _NewWorldTranslation)
+{
+	FTransform transform = _BodyInstance->GetUnrealWorldTransform();
+	transform.SetTranslation(transform.GetTranslation() + _NewWorldTranslation);
+	_BodyInstance->SetBodyTransform(transform, ETeleportType::TeleportPhysics);
+}
+
+FVector UHBMovementComponent::GetTranslation(FBodyInstance* _BodyInstance)
+{
+	return _BodyInstance->GetUnrealWorldTransform().GetTranslation();
 }
 
 FVector2D UHBMovementComponent::ConsumeMovementInput()

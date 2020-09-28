@@ -80,8 +80,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = Curve)
 		UCurveFloat* CrouchCurve;
 
+	UPROPERTY(EditDefaultsOnly, Category = Curve)
+		UCurveFloat* WallrunFalloffCurve;
+
 private:
 	float CrouchCurveTimeline = 0;
+	float WallrunFalloffTimeline = 0;
 
 
 	// Air

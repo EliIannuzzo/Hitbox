@@ -63,7 +63,7 @@ void UHBPlayerCollisionComponent::SubstepTick(float _DeltaTime, FBodyInstance* _
 	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(CapsuleComponent->GetScaledCapsuleRadius() * 0.95f), CollisionParams);
 	
 	DistanceToGround = (hit) ? start.Z - outHit.ImpactPoint.Z - CapsuleComponent->GetScaledCapsuleHalfHeight() : 9999;
-	Normal = IsGrounded() ? outHit.Normal : FVector::UpVector;
+	Normal = IsGrounded() ? outHit.ImpactNormal : FVector::UpVector;
 
 
 	float floorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Normal, FVector::UpVector)));

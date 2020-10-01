@@ -21,11 +21,14 @@ public:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void SubstepTick(float _DeltaTime, FBodyInstance* _BodyInstance);
-
-	bool IsNearGround()			{ return (DistanceToGround < NearGroundDistance);	}
-	bool IsGrounded()			{ return (DistanceToGround < GroundDistance);		}
-	FVector GetNormal()			{ return Normal;									}
+	
 	float GetDistanceToGround() { return DistanceToGround;							}
+	bool IsNearGround()			{ return (DistanceToGround < NearGroundDistance);	}
+	bool IsNearWall()			{ return (DistanceToWall < NearGroundDistance);		}
+	bool ContactWithGround()	{ return (DistanceToGround < GroundDistance);		}
+	bool ContactWithWall()		{ return (DistanceToWall < GroundDistance);			}
+	FVector GetFloorNormal()	{ return GroundNormal;								}
+	FVector GetWallNormal()		{ return WallNormal;								}
 
 	//< The CapsuleComponent being used for movement collision. >
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -38,7 +41,11 @@ public:
 		float GroundDistance = 0.1f;
 
 private:
-	FVector Normal = FVector::UpVector;
+	void TraceFloor(FBodyInstance* _BodyInstance);
+	void TraceWalls(FBodyInstance* _BodyInstance);
+
+	FVector GroundNormal = FVector::UpVector;
+	FVector WallNormal = FVector::ZeroVector;
 	float DistanceToGround = 0;
-	bool Grounded = false;
+	float DistanceToWall = 0;
 };

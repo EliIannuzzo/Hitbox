@@ -48,23 +48,39 @@ void UHBPlayerCollisionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 void UHBPlayerCollisionComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyInstance)
 {
-	//< Sphere cast to ground. >
+	TraceFloor(_BodyInstance);
+	TraceWalls(_BodyInstance);
+}
+
+void UHBPlayerCollisionComponent::TraceFloor(FBodyInstance* _BodyInstance)
+{
 	FHitResult outHit;
 
-	FVector start	= _BodyInstance->GetUnrealWorldTransform().GetTranslation();
-	FVector end		= start + (FVector::DownVector * 9999);
+	FVector start = _BodyInstance->GetUnrealWorldTransform().GetTranslation();
+	FVector end = start + (FVector::DownVector * 9999);
 
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(this->GetOwner());
 
-	//< Distance is not accurate, need to manually calculate distance using the start position & the ImpactPoint. >
-
 	//< Update our distance to ground & ground normal. >
 	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(CapsuleComponent->GetScaledCapsuleRadius() * 0.95f), CollisionParams);
-	
+
 	DistanceToGround = (hit) ? start.Z - outHit.ImpactPoint.Z - CapsuleComponent->GetScaledCapsuleHalfHeight() : 9999;
-	Normal = IsGrounded() ? outHit.ImpactNormal : FVector::UpVector;
+	GroundNormal = ContactWithGround() ? outHit.ImpactNormal : FVector::UpVector;
+}
 
+void UHBPlayerCollisionComponent::TraceWalls(FBodyInstance* _BodyInstance)
+{
+	FHitResult outHit;
 
-	float floorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Normal, FVector::UpVector)));
+	FVector start = _BodyInstance->GetUnrealWorldTransform().GetTranslation();
+	FVector end = start + FVector::UpVector;
+
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this->GetOwner());
+
+	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(CapsuleComponent->GetScaledCapsuleRadius() * 1.1f, CapsuleComponent->GetScaledCapsuleHalfHeight() * 0.9f), CollisionParams);
+
+	DistanceToWall = (hit) ? start.Z - outHit.ImpactPoint.Z : 9999;
+	WallNormal = ContactWithWall() ? outHit.ImpactNormal : FVector::ZeroVector;
 }

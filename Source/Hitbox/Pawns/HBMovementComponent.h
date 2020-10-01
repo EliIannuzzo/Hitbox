@@ -26,81 +26,87 @@ public:
 	void Input_CrouchDown();
 	void Input_CrouchUp();
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//< CONFIGURATION >
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Gravity = 15;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float GroundAcceleration = 4500;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float GroundDeceleration = 4500;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float MaxSlopeAngle = 40;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float StickToGroundForce = 15;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
 		float PlayerRadius = 38;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
 		float PlayerHeight = 176;
 
-private:
-	bool ContactWithGround = true;
 
-	// Jumping
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float JumpForce = 700;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|Gravity")
+		float Gravity = 15;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float SlideHopWindow = 0.15f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|Gravity")
+		bool UseGravity = true;
 
-	// Walking
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement")
+		float GroundAcceleration = 4500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement")
+		float GroundDeceleration = 4500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement")
+		float MaxSlopeAngle = 40;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement")
+		float StickToGroundForce = 15;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Walking")
 		float WalkSpeed = 475;
 
-	// Running
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Running")
 		float RunSpeed = 750;
 
-	// Crouch / Sliding
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float SlideForce = 1000;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float CrouchSpeed = 200;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float SlideDeceleration = 500;
 
-	UPROPERTY(EditDefaultsOnly, Category = Curve)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
+		float SlideForce = 1000;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
+		float CrouchSpeed = 200;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
 		UCurveFloat* CrouchCurve;
 
-	UPROPERTY(EditDefaultsOnly, Category = Curve)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
+		float SlideDeceleration = 500;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|AirMovement")
+		float AirSpeed = 250;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|AirMovement")
+		float AirAcceleration = 2000;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|AirMovement")
+		float AirDeceleration = 100;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|Jumping")
+		float JumpForce = 700;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|Jumping")
+		float SlideHopWindow = 0.15f;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
+		float MaxApproachAngleVertical = 15;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
+		float MaxApproachAngleHorizontal = 120;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		UCurveFloat* WallrunFalloffCurve;
 
 private:
+	bool Grounded = true;
 	float CrouchCurveTimeline = 0;
 	float WallrunFalloffTimeline = 0;
 
 
-	// Air
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float AirSpeed = 250;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float AirAcceleration = 2000;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float AirDeceleration = 100;
-
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//< MOVEMENT >
 private:
 	void GroundMove(float _DeltaTime, FBodyInstance* _BodyInstance);
 	void AirMove(float _DeltaTime, FBodyInstance* _BodyInstance);
@@ -117,6 +123,7 @@ private:
 	bool IsSliding();
 	bool CanSlideBoost();
 	void StickToGround(float _DeltaTime);
+	bool ShouldWallRun(FBodyInstance* _BodyInstance);
 
 	void TickCapsuleHeight(float _DeltaTime, FBodyInstance* _BodyInstance);
 
@@ -124,6 +131,11 @@ private:
 	FVector GetTranslation(FBodyInstance* _BodyInstance);
 
 	FVector NewVelocity;
+
+	//< Helper Methods. >
+private:
+	float AngleBetweenTwoVectors(FVector _A, FVector _B);
+
 
 private:
 	bool PerformBoost = false;

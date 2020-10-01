@@ -66,24 +66,24 @@ void UHBMovementComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyIns
 		TickCapsuleHeight(_DeltaTime, _BodyInstance);
 
 		//< Update "ContactWithGround". >
-		if (CollisionComponent->IsGrounded())
+		if (CollisionComponent->ContactWithGround())
 		{
-			ContactWithGround = true;
-			float floorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(CollisionComponent->GetNormal(), FVector::UpVector)));
+			Grounded = true;
+			float floorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(CollisionComponent->GetFloorNormal(), FVector::UpVector)));
 			if (floorAngle > MaxSlopeAngle)
 			{
-				ContactWithGround = false;
+				Grounded = false;
 			}
 		}
 		else
 		{
 			if (!CollisionComponent->IsNearGround())
 			{
-				ContactWithGround = false;
+				Grounded = false;
 			}
 		}	
 
-		if (ContactWithGround)
+		if (Grounded)
 		{
 			if (AttemptJump)
 			{
@@ -93,7 +93,7 @@ void UHBMovementComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyIns
 			{
 				GroundMove(_DeltaTime, _BodyInstance);
 
-				if (!CollisionComponent->IsGrounded())
+				if (!CollisionComponent->ContactWithGround())
 				{
 					StickToGround(_DeltaTime);
 				}
@@ -179,7 +179,7 @@ void UHBMovementComponent::GroundMove(float _DeltaTime, FBodyInstance* _BodyInst
 		}
 
 		//< Adjust target velocity via ground normal. >
-		deltaVel = FVector::VectorPlaneProject(deltaVel, CollisionComponent->GetNormal());
+		deltaVel = FVector::VectorPlaneProject(deltaVel, CollisionComponent->GetFloorNormal());
 
 		NewVelocity += deltaVel;
 	}
@@ -231,7 +231,7 @@ void UHBMovementComponent::Jump(FBodyInstance* _BodyInstance)
 	//< Perform jump & reset. >
 	NewVelocity.Z = JumpForce;
 	AttemptJump = false;
-	ContactWithGround = false;
+	Grounded = false;
 }
 
 void UHBMovementComponent::CounterMovement()
@@ -288,7 +288,7 @@ float UHBMovementComponent::GetCurrentHorizontalSpeed()
 
 float UHBMovementComponent::GetDeceleration()
 {
-	if (ContactWithGround)
+	if (Grounded)
 	{
 		return (IsSliding()) ? SlideDeceleration : GroundDeceleration;
 	}
@@ -300,7 +300,7 @@ float UHBMovementComponent::GetDeceleration()
 
 bool UHBMovementComponent::IsSliding()
 {
-	if (ContactWithGround && CrouchPressed)
+	if (Grounded && CrouchPressed)
 	{
 		if (NewVelocity.Size() > WalkSpeed) return true;
 	}
@@ -328,8 +328,18 @@ bool UHBMovementComponent::CanSlideBoost()
 
 void UHBMovementComponent::StickToGround(float _DeltaTime)
 {
-	FVector forceToApply = (CollisionComponent->GetNormal() * -1.0f) * (StickToGroundForce + (NewVelocity.Size() / 10)) * 100.0f * _DeltaTime;
+	FVector forceToApply = (CollisionComponent->GetFloorNormal() * -1.0f) * (StickToGroundForce + (NewVelocity.Size() / 10)) * 100.0f * _DeltaTime;
 	NewVelocity += forceToApply;
+}
+
+bool UHBMovementComponent::ShouldWallRun(FBodyInstance* _BodyInstance)
+{
+	if (_BodyInstance->GetUnrealWorldVelocity().Z > 0)
+	{
+
+	}
+
+	return false;
 }
 
 void UHBMovementComponent::TickCapsuleHeight(float _DeltaTime, FBodyInstance* _BodyInstance)
@@ -364,6 +374,11 @@ void UHBMovementComponent::AddTranslation(FBodyInstance* _BodyInstance, FVector 
 FVector UHBMovementComponent::GetTranslation(FBodyInstance* _BodyInstance)
 {
 	return _BodyInstance->GetUnrealWorldTransform().GetTranslation();
+}
+
+float UHBMovementComponent::AngleBetweenTwoVectors(FVector _A, FVector _B)
+{
+	return UKismetMathLibrary::DegAcos(FVector::DotProduct(_A.GetSafeNormal(0.0001f), _B.GetSafeNormal(0.0001f)));
 }
 
 FVector2D UHBMovementComponent::ConsumeMovementInput()

@@ -29,7 +29,7 @@ UHBPlayerCollisionComponent::UHBPlayerCollisionComponent()
 	CapsuleComponent->BodyInstance.bLockZRotation = false;
 
 	CapsuleComponent->BodyInstance.LinearDamping = 0;
-	CapsuleComponent->BodyInstance.AngularDamping = 0;
+	CapsuleComponent->BodyInstance.AngularDamping = 0.1f;
 
 	CapsuleComponent->SetEnableGravity(false);
 }
@@ -65,8 +65,8 @@ void UHBPlayerCollisionComponent::TraceFloor(FBodyInstance* _BodyInstance)
 	//< Update our distance to ground & ground normal. >
 	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(CapsuleComponent->GetScaledCapsuleRadius() * 0.95f), CollisionParams);
 
-	DistanceToGround = (hit) ? start.Z - outHit.ImpactPoint.Z - CapsuleComponent->GetScaledCapsuleHalfHeight() : 9999;
-	GroundNormal = ContactWithGround() ? outHit.ImpactNormal : FVector::UpVector;
+	GroundTraceDistance	= (hit) ? start.Z - outHit.ImpactPoint.Z - CapsuleComponent->GetScaledCapsuleHalfHeight() : 9999;
+	GroundTraceNormal		= (hit) ? outHit.ImpactNormal : FVector::UpVector;
 }
 
 void UHBPlayerCollisionComponent::TraceWalls(FBodyInstance* _BodyInstance)
@@ -79,8 +79,18 @@ void UHBPlayerCollisionComponent::TraceWalls(FBodyInstance* _BodyInstance)
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(this->GetOwner());
 
-	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(CapsuleComponent->GetScaledCapsuleRadius() * 1.1f, CapsuleComponent->GetScaledCapsuleHalfHeight() * 0.9f), CollisionParams);
+	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(CapsuleComponent->GetScaledCapsuleRadius() * 1.2f, CapsuleComponent->GetScaledCapsuleHalfHeight() * 0.9f), CollisionParams);
 
-	DistanceToWall = (hit) ? start.Z - outHit.ImpactPoint.Z : 9999;
-	WallNormal = ContactWithWall() ? outHit.ImpactNormal : FVector::ZeroVector;
+	SideTraceDistance	= (hit) ? FVector::Distance(FlattenOnAxis(start, FVector::UpVector), FlattenOnAxis(outHit.ImpactPoint, FVector::UpVector)) - CapsuleComponent->GetScaledCapsuleRadius() : 9999;
+	SideTracePosition	= (hit) ? outHit.ImpactPoint : FVector::ZeroVector;
+	SideTraceNormal		= (hit) ? outHit.ImpactNormal : FVector::ZeroVector;
+}
+
+FVector UHBPlayerCollisionComponent::FlattenOnAxis(FVector _InVector, FVector _Axis)
+{
+	FVector returnVector = _InVector;
+	FVector axisDelta = _InVector * _Axis;
+
+	returnVector += (_Axis.Size() > 0) ? -axisDelta : axisDelta;
+	return returnVector;
 }

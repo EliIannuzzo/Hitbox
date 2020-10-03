@@ -22,13 +22,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void SubstepTick(float _DeltaTime, FBodyInstance* _BodyInstance);
 	
-	float GetDistanceToGround() { return DistanceToGround;							}
-	bool IsNearGround()			{ return (DistanceToGround < NearGroundDistance);	}
-	bool IsNearWall()			{ return (DistanceToWall < NearGroundDistance);		}
-	bool ContactWithGround()	{ return (DistanceToGround < GroundDistance);		}
-	bool ContactWithWall()		{ return (DistanceToWall < GroundDistance);			}
-	FVector GetFloorNormal()	{ return GroundNormal;								}
-	FVector GetWallNormal()		{ return WallNormal;								}
+	float GetDistanceToGround() { return GroundTraceDistance;							}
+	bool IsNearGround()			{ return (GroundTraceDistance < NearGroundDistance);	}
+	bool IsNearWall()			{ return (SideTraceDistance < NearGroundDistance);		}
+	bool ContactWithGround()	{ return (GroundTraceDistance < GroundDistance);		}
+	bool ContactWithWall()		{ return (SideTraceDistance < GroundDistance);			}
+	FVector GetGroundTraceNormal()	{ return GroundTraceNormal;								}
+	FVector GetSideTraceNormal()	{ return SideTraceNormal;								}
+	FVector GetSideTracePosition()	{ return SideTracePosition;								}
 
 	//< The CapsuleComponent being used for movement collision. >
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -43,9 +44,15 @@ public:
 private:
 	void TraceFloor(FBodyInstance* _BodyInstance);
 	void TraceWalls(FBodyInstance* _BodyInstance);
+	FVector FlattenOnAxis(FVector _InVector, FVector _Axis);
 
-	FVector GroundNormal = FVector::UpVector;
-	FVector WallNormal = FVector::ZeroVector;
-	float DistanceToGround = 0;
-	float DistanceToWall = 0;
+	FVector GroundTraceNormal	= FVector::UpVector;
+	FVector SideTraceNormal		= FVector::ZeroVector;
+	FVector SideTracePosition	= FVector::ZeroVector;
+	FVector FrontTraceNormal	= FVector::ZeroVector;
+	FVector FrontTracePosition	= FVector::ZeroVector;
+
+	float GroundTraceDistance	= 0;
+	float SideTraceDistance		= 0;
+	float FrontTraceDistance	= 0;
 };

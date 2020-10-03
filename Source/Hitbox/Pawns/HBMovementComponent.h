@@ -102,43 +102,49 @@ public:
 		UCurveFloat* WallrunFalloffCurve;
 
 private:
-	bool Grounded = true;
-	float CrouchCurveTimeline = 0;
-	float WallrunFalloffTimeline = 0;
-
-
-private:
 	void GroundMove(float _DeltaTime, FBodyInstance* _BodyInstance);
 	void AirMove(float _DeltaTime, FBodyInstance* _BodyInstance);
+	void WallRun(float _DeltaTime, FBodyInstance* _BodyInstance);
 	void Jump(FBodyInstance* _BodyInstance);
 
-	void CounterMovement();
 	void ApplyGravity(float _DeltaTime, FBodyInstance* _BodyInstance);
-	FVector2D FindVelRelativeToLook();
+	void StickToGround(float _DeltaTime);
+	void StickToWall(float _DeltaTime);
 
-	void ApplyFinalVelocity(FBodyInstance* _BodyInstance);
-	float GetTargetSpeed(FVector _Direction);
-	float GetCurrentHorizontalSpeed();
-	float GetDeceleration();
 	bool IsSliding();
 	bool CanSlideBoost();
-	void StickToGround(float _DeltaTime);
-	bool ShouldWallRun(FBodyInstance* _BodyInstance);
+
+	float GetTargetSpeed(FVector _Direction);
+	float GetDeceleration();
+
+	bool ShouldStartWallRun(FBodyInstance* _BodyInstance);
+
+	void StartWallRun(FBodyInstance* _BodyInstance);
+	void StopWallRun(FBodyInstance* _BodyInstance, FVector _ExitVelocity, bool _VelocityChange);
 
 	void TickCapsuleHeight(float _DeltaTime, FBodyInstance* _BodyInstance);
+
+	void ApplyFinalVelocity(FBodyInstance* _BodyInstance);
+	FVector NewVelocity;
+
+
+private: //< Helper Methods. >
+	FVector2D FindVelRelativeToLook();
+	float AngleBetweenTwoVectors(FVector _A, FVector _B);
 
 	void AddTranslation(FBodyInstance* _BodyInstance, FVector _NewWorldTranslation);
 	FVector GetTranslation(FBodyInstance* _BodyInstance);
 
-	FVector NewVelocity;
-
-	//< Helper Methods. >
-private:
-	float AngleBetweenTwoVectors(FVector _A, FVector _B);
-
+	float GetCurrentHorizontalSpeed();
 
 private:
+	bool Grounded = true;
 	bool PerformBoost = false;
+	float CrouchCurveTimeline = 0;
+	float WallrunFalloffTimeline = 0;
+	bool WallRunActive = false;
+	bool WallRunSide = false; // false = left, true = right.
+	FVector PreviousWallNormal = FVector::ZeroVector;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< COMPONENTS >
@@ -154,13 +160,12 @@ private:
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< INPUT >
-private:
-	FVector2D ConsumeMovementInput();
-	float JumpDelayTimer = 0;
-	bool AttemptJump = false;
-
 public:
 	FVector2D MovementInput = FVector2D::ZeroVector;
 	bool SprintActive = false;
 	bool CrouchPressed = false;
+
+private:
+	float JumpDelayTimer = 0;
+	bool AttemptJump = false;
 };

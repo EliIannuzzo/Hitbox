@@ -286,7 +286,7 @@ void UHBMovementComponent::WallRun(float _DeltaTime, FBodyInstance* _BodyInstanc
 void UHBMovementComponent::Jump(FBodyInstance* _BodyInstance)
 {
 	//< Move outside range of IsGrounded check to prevent "landing" on the next frame. >
-	float PreJumpDistance = CollisionComponent->GroundDistance;
+	float PreJumpDistance = CollisionComponent->GroundContactDistance;
 	if (CollisionComponent->GetDistanceToGround() < 0) PreJumpDistance += FMath::Abs(CollisionComponent->GetDistanceToGround()); //Account for the curvature of our capsule bottom. 
 
 	AddTranslation(_BodyInstance, FVector(0, 0, PreJumpDistance));
@@ -402,7 +402,7 @@ bool UHBMovementComponent::ShouldStartWallRun(FBodyInstance* _BodyInstance)
 		if (!CrouchPressed && GetCurrentHorizontalSpeed() > 0)
 		{
 			//< Check angle of approach. >
-			if (CollisionComponent->ContactWithWall())
+			if (CollisionComponent->ContactWithSideWall())
 			{
 				float approachAngle = AngleBetweenTwoVectors(CollisionComponent->GetSideTraceNormal() * -1, _BodyInstance->GetUnrealWorldTransform().GetUnitAxis(EAxis::X));
 				if (approachAngle > MaxApproachAngleVertical && approachAngle < MaxApproachAngleHorizontal)

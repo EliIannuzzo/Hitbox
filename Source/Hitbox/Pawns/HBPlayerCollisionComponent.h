@@ -22,24 +22,39 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void SubstepTick(float _DeltaTime, FBodyInstance* _BodyInstance);
 	
-	float GetDistanceToGround() { return GroundTraceDistance;							}
-	bool IsNearGround()			{ return (GroundTraceDistance < NearGroundDistance);	}
-	bool IsNearWall()			{ return (SideTraceDistance < NearGroundDistance);		}
-	bool ContactWithGround()	{ return (GroundTraceDistance < GroundDistance);		}
-	bool ContactWithWall()		{ return (SideTraceDistance < GroundDistance);			}
-	FVector GetGroundTraceNormal()	{ return GroundTraceNormal;								}
-	FVector GetSideTraceNormal()	{ return SideTraceNormal;								}
-	FVector GetSideTracePosition()	{ return SideTracePosition;								}
+	float GetDistanceToGround()		{ return GroundTraceDistance;	}
+	float GetDistanceToSideWall()	{ return SideTraceDistance;		}
+	float GetDistanceToFrontWall()	{ return FrontTraceDistance;	}
+
+	bool IsNearGround()		{ return (GroundTraceDistance < GroundNearDistance);		}
+	bool IsNearSideWall()	{ return (SideTraceDistance < WallNearDistance);			}
+	bool IsNearFrontWall()	{ return (FrontTraceDistance < WallNearDistance);			}
+
+	bool ContactWithGround()	{ return (GroundTraceDistance < GroundContactDistance);	}
+	bool ContactWithSideWall()	{ return (SideTraceDistance < WallContactDistance);		}
+	bool ContactWithFrontWall() { return (FrontTraceDistance < WallContactDistance);	}
+
+	FVector GetGroundTraceNormal()	{ return GroundTraceNormal;		}
+	FVector GetSideTraceNormal()	{ return SideTraceNormal;		}
+	FVector GetSideTracePosition()	{ return SideTracePosition;		}
+	FVector GetFrontTraceNormal()	{ return FrontTraceNormal;		}
+	FVector GetFrontTracePosition()	{ return FrontTracePosition;	}
 
 	//< The CapsuleComponent being used for movement collision. >
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UCapsuleComponent* CapsuleComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float NearGroundDistance = 20;
+		float GroundNearDistance = 20;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float GroundDistance = 0.1f;
+		float GroundContactDistance = 0.1f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float WallNearDistance = 10;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float WallContactDistance = 0.1f;
 
 private:
 	void TraceFloor(FBodyInstance* _BodyInstance);

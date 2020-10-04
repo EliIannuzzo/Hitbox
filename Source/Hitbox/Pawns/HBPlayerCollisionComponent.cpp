@@ -66,24 +66,53 @@ void UHBPlayerCollisionComponent::TraceFloor(FBodyInstance* _BodyInstance)
 	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(CapsuleComponent->GetScaledCapsuleRadius() * 0.95f), CollisionParams);
 
 	GroundTraceDistance	= (hit) ? start.Z - outHit.ImpactPoint.Z - CapsuleComponent->GetScaledCapsuleHalfHeight() : 9999;
-	GroundTraceNormal		= (hit) ? outHit.ImpactNormal : FVector::UpVector;
+	GroundTraceNormal	= (hit) ? outHit.ImpactNormal : FVector::UpVector;
 }
 
 void UHBPlayerCollisionComponent::TraceWalls(FBodyInstance* _BodyInstance)
 {
-	FHitResult outHit;
-
-	FVector start = _BodyInstance->GetUnrealWorldTransform().GetTranslation();
-	FVector end = start + FVector::UpVector;
+	FTransform bodyTransform = _BodyInstance->GetUnrealWorldTransform();
+	FVector start = bodyTransform.GetTranslation();
 
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(this->GetOwner());
 
-	bool hit = GetWorld()->SweepSingleByChannel(outHit, start, end, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(CapsuleComponent->GetScaledCapsuleRadius() * 1.2f, CapsuleComponent->GetScaledCapsuleHalfHeight() * 0.9f), CollisionParams);
+	//< Trace side walls, closest wall results are stored. >
+	FHitResult outHitLeft;
+	FHitResult outHitRight;
 
-	SideTraceDistance	= (hit) ? FVector::Distance(FlattenOnAxis(start, FVector::UpVector), FlattenOnAxis(outHit.ImpactPoint, FVector::UpVector)) - CapsuleComponent->GetScaledCapsuleRadius() : 9999;
-	SideTracePosition	= (hit) ? outHit.ImpactPoint : FVector::ZeroVector;
-	SideTraceNormal		= (hit) ? outHit.ImpactNormal : FVector::ZeroVector;
+	FVector endLeft		= start + (-bodyTransform.GetUnitAxis(EAxis::Y)) * (WallNearDistance + CapsuleComponent->GetScaledCapsuleRadius());
+	FVector endRight	= start + bodyTransform.GetUnitAxis(EAxis::Y) * (WallNearDistance + CapsuleComponent->GetScaledCapsuleRadius());
+
+	bool hitLeft	= GetWorld()->LineTraceSingleByChannel(outHitLeft,	start, endLeft,		ECollisionChannel::ECC_Visibility, CollisionParams);
+	bool hitRight	= GetWorld()->LineTraceSingleByChannel(outHitRight, start, endRight,	ECollisionChannel::ECC_Visibility, CollisionParams);
+
+	float leftDistance	= (hitLeft) ? FVector::Distance(FlattenOnAxis(start, FVector::UpVector), FlattenOnAxis(outHitLeft.ImpactPoint, FVector::UpVector)) - CapsuleComponent->GetScaledCapsuleRadius() : 9999;
+	float rightDistance = (hitRight) ? FVector::Distance(FlattenOnAxis(start, FVector::UpVector), FlattenOnAxis(outHitRight.ImpactPoint, FVector::UpVector)) - CapsuleComponent->GetScaledCapsuleRadius() : 9999;
+
+	if (!hitLeft && !hitRight)
+	{
+		SideTraceDistance	= 9999;
+		SideTracePosition	= FVector::ZeroVector;
+		SideTraceNormal		= FVector::ZeroVector;
+	}
+	else
+	{
+		SideTraceDistance	= (leftDistance < rightDistance) ? leftDistance : rightDistance;
+		SideTracePosition	= (leftDistance < rightDistance) ? outHitLeft.ImpactPoint : outHitRight.ImpactPoint;
+		SideTraceNormal		= (leftDistance < rightDistance) ? outHitLeft.ImpactNormal : outHitRight.ImpactNormal;
+	}
+
+
+	//< Trace front wall. >
+	FHitResult outHitFront;
+	FVector endFront = start + bodyTransform.GetUnitAxis(EAxis::X) * (WallNearDistance + CapsuleComponent->GetScaledCapsuleRadius());
+
+	bool hitFront = GetWorld()->LineTraceSingleByChannel(outHitFront, start, endLeft, ECollisionChannel::ECC_Visibility, CollisionParams);
+
+	FrontTraceDistance	= (hitFront) ? FVector::Distance(FlattenOnAxis(start, FVector::UpVector), FlattenOnAxis(outHitFront.ImpactPoint, FVector::UpVector)) - CapsuleComponent->GetScaledCapsuleRadius() : 9999;
+	FrontTracePosition	= (hitFront) ? outHitFront.ImpactPoint : FVector::ZeroVector;
+	FrontTraceNormal	= (hitFront) ? outHitFront.ImpactNormal : FVector::ZeroVector;
 }
 
 FVector UHBPlayerCollisionComponent::FlattenOnAxis(FVector _InVector, FVector _Axis)

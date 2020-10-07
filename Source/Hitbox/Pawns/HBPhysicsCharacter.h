@@ -36,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		float CameraHeight = 70;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		float SmoothedTargetRotationSpeed = 10;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta = (ClampMin = "1.0", ClampMax = "10.0", UIMin = "1.0", UIMax = "10.0"))
 		int MouseSensitivity = 5;
 

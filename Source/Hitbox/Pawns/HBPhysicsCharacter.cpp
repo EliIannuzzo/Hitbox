@@ -23,21 +23,11 @@ AHBPhysicsCharacter::AHBPhysicsCharacter()
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComponent->SetupAttachment(ViewMountComponent);
-
-
-	//< Load & apply the player physics material. >
-	static ConstructorHelpers::FObjectFinder<UPhysicalMaterial>FoundMaterial(TEXT("/Game/Materials/PhysicsMaterials/PM_Character.PM_Character"));
-
-	if (FoundMaterial.Succeeded())
-	{
-		MovementComponent->GetCollisionComponent()->CapsuleComponent->SetPhysMaterialOverride(FoundMaterial.Object);
-	}
 }
 
 void AHBPhysicsCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void AHBPhysicsCharacter::OnConstruction(const FTransform& _Transform)
@@ -58,6 +48,14 @@ void AHBPhysicsCharacter::UpdateViewingAngle(float _DeltaTime)
 
 	FVector2D lastMouseDelta = ConsumeMouseInput();
 
+	//< Gather any additional rotations & account for some amount of that. >
+	FRotator targetRotationDelta = MovementComponent->GetTargetRotationDelta();
+	float multiplier = FMath::Clamp((float)(_DeltaTime * SmoothedTargetRotationSpeed), 0.0f, 1.0f);
+	float addedYaw = targetRotationDelta.Yaw * multiplier;
+
+	targetRotationDelta.Yaw -= addedYaw;
+	MovementComponent->SetTargetRotationDelta(targetRotationDelta);
+
 	float horizontalDelta = (lastMouseDelta.X * 25 * MouseSensitivity) * _DeltaTime;
 	float verticalDelta = (lastMouseDelta.Y * 25 * MouseSensitivity) * _DeltaTime;
 
@@ -66,7 +64,8 @@ void AHBPhysicsCharacter::UpdateViewingAngle(float _DeltaTime)
 	ViewMountComponent->SetRelativeRotation(FRotator(newPitch, 0, 0), false, nullptr);
 
 	//< Rotate Actor (Horizontal) >
-	AddActorWorldRotation(FRotator(0, horizontalDelta, 0), false);
+	AddActorWorldRotation(FRotator(0, horizontalDelta + addedYaw, 0), false);
+	UE_LOG(LogTemp, Display, TEXT("Added yaw: %f"), addedYaw);
 }
 
 void AHBPhysicsCharacter::SetupPlayerInputComponent(UInputComponent* _PlayerInputComponent)

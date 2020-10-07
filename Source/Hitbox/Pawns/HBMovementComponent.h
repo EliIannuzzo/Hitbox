@@ -28,10 +28,13 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
-		float PlayerRadius = 38;
+		float PlayerRadius = 26;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
-		float PlayerHeight = 176;
+		float PlayerHeight = 172;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
+		UPhysicalMaterial* PhysicsMaterial;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|Gravity")
@@ -55,15 +58,15 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Walking")
-		float WalkSpeed = 475;
+		float WalkSpeed = 450;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Running")
-		float RunSpeed = 750;
+		float RunSpeed = 700;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
-		float SlideForce = 1000;
+		float SlideForce = 850;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
 		float CrouchSpeed = 200;
@@ -97,6 +100,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		float MaxApproachAngleHorizontal = 120;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
+		float WallJumpForce = 850.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
+		float WallRunDelay = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
+		float StickToWallForce = 35.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		UCurveFloat* WallrunFalloffCurve;
@@ -137,14 +149,23 @@ private: //< Helper Methods. >
 
 	float GetCurrentHorizontalSpeed();
 
+public:
+	FRotator GetTargetRotationDelta() { return TargetRotationDelta; }
+	void SetTargetRotationDelta(FRotator _NewDelta) { TargetRotationDelta = _NewDelta; }
+
 private:
 	bool Grounded = true;
 	bool PerformBoost = false;
 	float CrouchCurveTimeline = 0;
 	float WallrunFalloffTimeline = 0;
+
 	bool WallRunActive = false;
 	bool WallRunSide = false; // false = left, true = right.
+	float WallRunSpeed = 0;
+	float WallRunDelayTimer = 0;
+
 	FVector PreviousWallNormal = FVector::ZeroVector;
+	FRotator TargetRotationDelta = FRotator::ZeroRotator;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< COMPONENTS >

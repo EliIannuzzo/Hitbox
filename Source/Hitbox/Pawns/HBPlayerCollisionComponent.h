@@ -22,23 +22,19 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void SubstepTick(float _DeltaTime, FBodyInstance* _BodyInstance);
 	
-	float GetDistanceToGround()		{ return GroundTraceDistance;	}
-	float GetDistanceToSideWall()	{ return SideTraceDistance;		}
-	float GetDistanceToFrontWall()	{ return FrontTraceDistance;	}
+	float GetDistanceToGround()		{ return GroundDistance;	}
+	float GetDistanceToWall()		{ return WallDistance;		}
 
-	bool IsNearGround()		{ return (GroundTraceDistance < GroundNearDistance);		}
-	bool IsNearSideWall()	{ return (SideTraceDistance < WallNearDistance);			}
-	bool IsNearFrontWall()	{ return (FrontTraceDistance < WallNearDistance);			}
+	FVector GetGroundNormal()		{ return GroundNormal;		}
+	FVector GetWallNormal()			{ return WallNormal;		}
+	FVector GetWallImpactPoint()	{ return WallImpactPoint;	}
 
-	bool ContactWithGround()	{ return (GroundTraceDistance < GroundContactDistance);	}
-	bool ContactWithSideWall()	{ return (SideTraceDistance < WallContactDistance);		}
-	bool ContactWithFrontWall() { return (FrontTraceDistance < WallContactDistance);	}
+	bool IsNearGround()				{ return (GroundDistance < GroundNearDistance);		}
+	bool IsNearWall()				{ return (WallDistance < WallNearDistance);			}
 
-	FVector GetGroundTraceNormal()	{ return GroundTraceNormal;		}
-	FVector GetSideTraceNormal()	{ return SideTraceNormal;		}
-	FVector GetSideTracePosition()	{ return SideTracePosition;		}
-	FVector GetFrontTraceNormal()	{ return FrontTraceNormal;		}
-	FVector GetFrontTracePosition()	{ return FrontTracePosition;	}
+	bool ContactWithGround()		{ return (GroundDistance < GroundContactDistance);	}
+	bool ContactWithWall()			{ return (WallDistance < WallContactDistance);		}
+
 
 	//< The CapsuleComponent being used for movement collision. >
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -54,20 +50,17 @@ public:
 		float WallNearDistance = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float WallContactDistance = 0.1f;
+		float WallContactDistance = 0.5f;
 
 private:
 	void TraceFloor(FBodyInstance* _BodyInstance);
-	void TraceWalls(FBodyInstance* _BodyInstance);
+	void TraceWall(FBodyInstance* _BodyInstance);
 	FVector FlattenOnAxis(FVector _InVector, FVector _Axis);
 
-	FVector GroundTraceNormal	= FVector::UpVector;
-	FVector SideTraceNormal		= FVector::ZeroVector;
-	FVector SideTracePosition	= FVector::ZeroVector;
-	FVector FrontTraceNormal	= FVector::ZeroVector;
-	FVector FrontTracePosition	= FVector::ZeroVector;
+	FVector GroundNormal	= FVector::UpVector;
+	FVector WallNormal		= FVector::ZeroVector;
+	FVector WallImpactPoint	= FVector::ZeroVector;
 
-	float GroundTraceDistance	= 0;
-	float SideTraceDistance		= 0;
-	float FrontTraceDistance	= 0;
+	float GroundDistance	= 0;
+	float WallDistance		= 0;
 };

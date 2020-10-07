@@ -13,12 +13,19 @@ UHBMovementComponent::UHBMovementComponent(const FObjectInitializer& ObjectIniti
 
 	//<  >
 	CollisionComponent = CreateDefaultSubobject<UHBPlayerCollisionComponent>(TEXT("CollisionComponent"));
+	if (CollisionComponent->CapsuleComponent)
+	{
+		CollisionComponent->CapsuleComponent->SetCapsuleSize(PlayerRadius, PlayerHeight / 2);
+	}
 }
 
 void UHBMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	CalculateCustomPhysics.BindUObject(this, &UHBMovementComponent::SubstepTick);
+
+	//< Apply the player physics material. >
+	if (PhysicsMaterial) CollisionComponent->CapsuleComponent->SetPhysMaterialOverride(PhysicsMaterial);
 }
 
 void UHBMovementComponent::TickComponent(float _DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -65,6 +72,8 @@ void UHBMovementComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyIns
 		//< Used for transitioning between height changes. >
 		TickCapsuleHeight(_DeltaTime, _BodyInstance);
 
+		if (WallRunDelayTimer > 0) WallRunDelayTimer -= _DeltaTime;
+
 		//< Tick Wallrun. >
 		if (WallRunActive)
 		{
@@ -76,7 +85,7 @@ void UHBMovementComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyIns
 			if (CollisionComponent->ContactWithGround())
 			{
 				Grounded = true;
-				float floorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(CollisionComponent->GetGroundTraceNormal(), FVector::UpVector)));
+				float floorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(CollisionComponent->GetGroundNormal(), FVector::UpVector)));
 				if (floorAngle > MaxSlopeAngle)
 				{
 					Grounded = false;
@@ -129,7 +138,7 @@ void UHBMovementComponent::Input_Jump()
 {
 	//< Ready jump & reset delay timer for perfect hopping. >
 	AttemptJump = true;
-	JumpDelayTimer = 0;
+	JumpDelayTimer = SlideHopWindow;
 }
 
 void UHBMovementComponent::Input_CrouchDown()
@@ -194,7 +203,7 @@ void UHBMovementComponent::GroundMove(float _DeltaTime, FBodyInstance* _BodyInst
 		}
 
 		//< Adjust target velocity via ground normal. >
-		deltaVel = FVector::VectorPlaneProject(deltaVel, CollisionComponent->GetGroundTraceNormal());
+		deltaVel = FVector::VectorPlaneProject(deltaVel, CollisionComponent->GetGroundNormal());
 
 		NewVelocity += deltaVel;
 	}
@@ -204,8 +213,10 @@ void UHBMovementComponent::AirMove(float _DeltaTime, FBodyInstance* _BodyInstanc
 {
 	if (AttemptJump)
 	{
-		JumpDelayTimer += _DeltaTime;
-		if (JumpDelayTimer > SlideHopWindow)
+		//< Tick down jump delay timer. >
+		if (JumpDelayTimer > 0) JumpDelayTimer -= _DeltaTime;
+
+		if (JumpDelayTimer <= 0)
 		{
 			AttemptJump = false;
 		}
@@ -242,14 +253,30 @@ void UHBMovementComponent::WallRun(float _DeltaTime, FBodyInstance* _BodyInstanc
 	WallrunFalloffCurve->GetTimeRange(wallrunCurveTimeMin, wallrunCurveTimeMax);
 	if (WallrunFalloffTimeline > wallrunCurveTimeMax)
 	{
-		StopWallRun(_BodyInstance, FVector::ZeroVector, false);
+		UE_LOG(LogTemp, Display, TEXT("Wallrun over"));
+		StopWallRun(_BodyInstance, CollisionComponent->GetWallNormal() * 35.0f, false);
+		WallRunDelayTimer = WallRunDelay * 3;
 		return;
 	}
+
+
+	//< Check for wall jump. >
+	if (AttemptJump)
+	{
+		//< Setup exit velocity. >
+		FVector exitVelocity = CollisionComponent->CapsuleComponent->GetForwardVector();
+		exitVelocity *= WallJumpForce;
+		exitVelocity.Z += WallJumpForce / 2;
+
+		StopWallRun(_BodyInstance, exitVelocity, true);
+		return;
+	}
+
 
 	//< Calculate rotation. >
 	FVector oldWallNormalRight = UKismetMathLibrary::RotateAngleAxis(PreviousWallNormal, 90.0f, FVector::UpVector);
 
-	float wallAngleDelta = AngleBetweenTwoVectors(PreviousWallNormal, CollisionComponent->GetSideTraceNormal());
+	float wallAngleDelta = AngleBetweenTwoVectors(PreviousWallNormal, CollisionComponent->GetWallNormal());
 	if (FMath::Abs(wallAngleDelta) < 0.03f) wallAngleDelta = 0; //< Round down to account for small precision error in the formula. >
 
 	//< If delta exists, find rotation direction. >
@@ -258,29 +285,33 @@ void UHBMovementComponent::WallRun(float _DeltaTime, FBodyInstance* _BodyInstanc
 		//< Exit wallrun if hit a normal too different than our current surface. >
 		if (wallAngleDelta > 45.0f)
 		{
+			UE_LOG(LogTemp, Display, TEXT("Fell off Wallrun"));
 			StopWallRun(_BodyInstance, FVector::ZeroVector, false);
 			return;
 		}
 
-		wallAngleDelta *= (FVector::DotProduct(CollisionComponent->GetSideTraceNormal(), oldWallNormalRight) < 0) ? -1 : 1;
+		wallAngleDelta *= (FVector::DotProduct(CollisionComponent->GetWallNormal(), oldWallNormalRight) < 0) ? -1 : 1;
+		UE_LOG(LogTemp, Display, TEXT("Added camera rotation: %f"), wallAngleDelta);
 	}
 
-	//< Rotate along wall. >
-	GetOwner()->AddActorWorldRotation(FRotator(0, wallAngleDelta, 0), false);
+	//< Set our target rotation change. >
+	TargetRotationDelta.Yaw += wallAngleDelta;
 
 	//< Accelerate along wall. >
-	FVector wallrunDirection = CollisionComponent->GetSideTraceNormal();
+	FVector wallrunDirection = CollisionComponent->GetWallNormal();
 	wallrunDirection.Z = 0;
 	wallrunDirection = wallrunDirection.RotateAngleAxis((WallRunSide) ? 90 : -90, FVector::UpVector);
 
-	FVector targetVelocity = wallrunDirection.GetSafeNormal() * RunSpeed;
+	FVector targetVelocity = wallrunDirection.GetSafeNormal() * WallRunSpeed;
 	FVector deltaVel = (targetVelocity - NewVelocity);
 
 	NewVelocity += deltaVel;
 
+	StickToWall(_DeltaTime);
+
 	//< Tick wall run time line. >
 	WallrunFalloffTimeline += _DeltaTime;
-	PreviousWallNormal = CollisionComponent->GetSideTraceNormal();
+	PreviousWallNormal = CollisionComponent->GetWallNormal();
 }
 
 void UHBMovementComponent::Jump(FBodyInstance* _BodyInstance)
@@ -370,7 +401,7 @@ bool UHBMovementComponent::CanSlideBoost()
 {
 	if (IsSliding() & PerformBoost)
 	{
-		if (GetCurrentHorizontalSpeed() > WalkSpeed && GetCurrentHorizontalSpeed() < SlideForce)
+		if (GetCurrentHorizontalSpeed() > ((WalkSpeed + RunSpeed) / 2) && GetCurrentHorizontalSpeed() < SlideForce)
 		{
 			return true;
 		}
@@ -386,28 +417,32 @@ bool UHBMovementComponent::CanSlideBoost()
 
 void UHBMovementComponent::StickToGround(float _DeltaTime)
 {
-	FVector forceToApply = (CollisionComponent->GetGroundTraceNormal() * -1.0f) * (StickToGroundForce + (NewVelocity.Size() / 10)) * 100.0f * _DeltaTime;
+	FVector forceToApply = (CollisionComponent->GetGroundNormal() * -1.0f) * (StickToGroundForce + (NewVelocity.Size() / 10)) * 100.0f * _DeltaTime;
 	NewVelocity += forceToApply;
 }
 
 void UHBMovementComponent::StickToWall(float _DeltaTime)
 {
-
+	FVector forceToApply = (CollisionComponent->GetWallNormal() * -1.0f) * StickToWallForce * _DeltaTime;
+	NewVelocity += forceToApply;
 }
 
 bool UHBMovementComponent::ShouldStartWallRun(FBodyInstance* _BodyInstance)
 {
-	if (_BodyInstance->GetUnrealWorldVelocity().Z > 0)
+	if (_BodyInstance->GetUnrealWorldVelocity().Z > -500.0f)
 	{
-		if (!CrouchPressed && GetCurrentHorizontalSpeed() > 0)
+		if (!CrouchPressed && GetCurrentHorizontalSpeed() > (CrouchSpeed + WalkSpeed) / 2)
 		{
-			//< Check angle of approach. >
-			if (CollisionComponent->ContactWithSideWall())
+			if (WallRunDelayTimer <= 0)
 			{
-				float approachAngle = AngleBetweenTwoVectors(CollisionComponent->GetSideTraceNormal() * -1, _BodyInstance->GetUnrealWorldTransform().GetUnitAxis(EAxis::X));
-				if (approachAngle > MaxApproachAngleVertical && approachAngle < MaxApproachAngleHorizontal)
+				//< Check angle of approach. >
+				if (CollisionComponent->ContactWithWall())
 				{
-					return true;
+					float approachAngle = AngleBetweenTwoVectors(CollisionComponent->GetWallNormal() * -1, _BodyInstance->GetUnrealWorldTransform().GetUnitAxis(EAxis::X));
+					if (approachAngle > MaxApproachAngleVertical && approachAngle < MaxApproachAngleHorizontal)
+					{
+						return true;
+					}
 				}
 			}
 		}
@@ -419,23 +454,47 @@ bool UHBMovementComponent::ShouldStartWallRun(FBodyInstance* _BodyInstance)
 void UHBMovementComponent::StartWallRun(FBodyInstance* _BodyInstance)
 {
 	//< Calculate wall side. >
-	FVector directionVector = (GetTranslation(_BodyInstance) - CollisionComponent->GetSideTracePosition()).GetSafeNormal().GetSafeNormal();
+	FVector directionVector = (GetTranslation(_BodyInstance) - CollisionComponent->GetWallImpactPoint()).GetSafeNormal().GetSafeNormal();
 	FVector rightVector = _BodyInstance->GetUnrealWorldTransform().GetUnitAxis(EAxis::Y).GetSafeNormal();
 	WallRunSide = FVector::DotProduct(directionVector, rightVector) < 0;
 
 	WallRunActive = true;
 	WallrunFalloffTimeline = 0;
-	PreviousWallNormal = CollisionComponent->GetSideTraceNormal();
+	PreviousWallNormal = CollisionComponent->GetWallNormal();
+	WallRunSpeed = GetCurrentHorizontalSpeed();
 
 	UseGravity = false;
+	WallRunDelayTimer = 0;
+
+	UE_LOG(LogTemp, Display, TEXT("Started Wallrun"));
 }
 
 void UHBMovementComponent::StopWallRun(FBodyInstance* _BodyInstance, FVector _ExitVelocity, bool _VelocityChange)
 {
 	//< Apply exit velocity. >
+	if (_ExitVelocity != FVector::ZeroVector)
+	{
+		if (!_VelocityChange)
+		{
+			//< Add exit velocity. >
+			NewVelocity += _ExitVelocity;
+
+			//< Perform jump & reset. >
+			NewVelocity.Z = _ExitVelocity.Z;
+		}
+		else
+		{
+			//< Apply exit velocity. >
+			NewVelocity = _ExitVelocity;
+		}
+	}
+
+	WallRunDelayTimer = WallRunDelay;
 
 	WallRunActive = false;
 	UseGravity = true;
+	AttemptJump = false;
+	Grounded = false;
 }
 
 void UHBMovementComponent::TickCapsuleHeight(float _DeltaTime, FBodyInstance* _BodyInstance)

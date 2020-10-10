@@ -47,10 +47,10 @@ public:
 		float GroundContactDistance = 0.1f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float WallNearDistance = 10;
+		float WallNearDistance = 20;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float WallContactDistance = 0.5f;
+		float WallContactDistance = 2.0f;
 
 private:
 	void TraceFloor(FBodyInstance* _BodyInstance);

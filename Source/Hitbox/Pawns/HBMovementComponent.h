@@ -58,11 +58,11 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Walking")
-		float WalkSpeed = 450;
+		float WalkSpeed = 400;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Running")
-		float RunSpeed = 700;
+		float RunSpeed = 600;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
@@ -96,16 +96,22 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
+		float WallRunSpeed = 800;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
+		float WallRunAcceleration = 1000;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		float MaxApproachAngleVertical = 15;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		float MaxApproachAngleHorizontal = 120;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
-		float WallJumpForce = 850.0f;
+		float WallJumpForce = 1000;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
-		float WallRunDelay = 0.5f;
+		float WallRunDelay = 0.3f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		float StickToWallForce = 35.0f;
@@ -161,7 +167,7 @@ private:
 
 	bool WallRunActive = false;
 	bool WallRunSide = false; // false = left, true = right.
-	float WallRunSpeed = 0;
+	float CurrentWallRunSpeed = 0;
 	float WallRunDelayTimer = 0;
 
 	FVector PreviousWallNormal = FVector::ZeroVector;
@@ -183,6 +189,7 @@ private:
 	//< INPUT >
 public:
 	FVector2D MovementInput = FVector2D::ZeroVector;
+	bool SprintPressed = false;
 	bool SprintActive = false;
 	bool CrouchPressed = false;
 

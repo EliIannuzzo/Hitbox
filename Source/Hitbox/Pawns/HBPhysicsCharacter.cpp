@@ -32,7 +32,7 @@ void AHBPhysicsCharacter::BeginPlay()
 
 void AHBPhysicsCharacter::OnConstruction(const FTransform& _Transform)
 {
-	ViewMountComponent->SetRelativeLocation(FVector(0, 0, CameraHeight), false, nullptr, ETeleportType::TeleportPhysics);
+	ViewMountComponent->SetRelativeLocation(FVector(0, 0, CalculateCameraHeight()), false, nullptr, ETeleportType::TeleportPhysics);
 }
 
 void AHBPhysicsCharacter::Tick(float _DeltaTime)
@@ -40,6 +40,7 @@ void AHBPhysicsCharacter::Tick(float _DeltaTime)
 	Super::Tick(_DeltaTime);
 
 	UpdateViewingAngle(_DeltaTime);
+	ViewMountComponent->SetRelativeLocation(FVector(0, 0, CalculateCameraHeight()), false, nullptr, ETeleportType::TeleportPhysics);
 }
 
 void AHBPhysicsCharacter::UpdateViewingAngle(float _DeltaTime)
@@ -96,7 +97,6 @@ void AHBPhysicsCharacter::Input_Jump()
 void AHBPhysicsCharacter::Input_Forward(float _Val)
 {
 	MovementComponent->MovementInput.X = _Val;
-	if (_Val < 0.9f) MovementComponent->SprintActive = false;
 }
 
 void AHBPhysicsCharacter::Input_Right(float _Val)
@@ -118,10 +118,12 @@ void AHBPhysicsCharacter::Input_LookHorizontal(float _Val)
 
 void AHBPhysicsCharacter::Input_SprintUp()
 {
+	MovementComponent->SprintPressed = false;
 }
 
 void AHBPhysicsCharacter::Input_SprintDown()
 {
+	MovementComponent->SprintPressed = true;
 	MovementComponent->SprintActive = true;
 }
 
@@ -140,4 +142,9 @@ FVector2D AHBPhysicsCharacter::ConsumeMouseInput()
 	FVector2D LastMouseDelta = MouseDelta;
 	MouseDelta = FVector2D::ZeroVector;
 	return LastMouseDelta;
+}
+
+float AHBPhysicsCharacter::CalculateCameraHeight()
+{
+	return MovementComponent->GetCollisionComponent()->CapsuleComponent->GetScaledCapsuleHalfHeight() - CameraDepth;
 }

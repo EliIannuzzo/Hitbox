@@ -66,6 +66,13 @@ void UHBMovementComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyIns
 		//< Update local copy of the velocity. >
 		NewVelocity = _BodyInstance->GetUnrealWorldVelocity();
 
+		//< Check for disable sprint. >
+		if (!SprintPressed & SprintActive)
+		{
+			if (GetCurrentHorizontalSpeed() < (WalkSpeed + RunSpeed) / 2)
+				SprintActive = false;
+		}
+
 		//< Update IsGrounded & ground normal. >
 		CollisionComponent->SubstepTick(_DeltaTime, _BodyInstance);
 
@@ -144,6 +151,7 @@ void UHBMovementComponent::Input_Jump()
 void UHBMovementComponent::Input_CrouchDown()
 {
 	CrouchPressed = true;
+	SprintActive = false;
 
 	//< If crouch while grounded & meeting the speed threshold, perform a slide boost. >
 	if (IsSliding())
@@ -157,6 +165,8 @@ void UHBMovementComponent::Input_CrouchUp()
 	//< If there is space above the player, stand up. >
 	CrouchPressed = false;
 	PerformBoost = false;
+
+	if (SprintPressed) SprintActive = true;
 }
 
 void UHBMovementComponent::GroundMove(float _DeltaTime, FBodyInstance* _BodyInstance)
@@ -179,8 +189,6 @@ void UHBMovementComponent::GroundMove(float _DeltaTime, FBodyInstance* _BodyInst
 
 			deltaVel = (targetVel - NewVelocity);
 			deltaVel.Z = 0;
-
-			SprintActive = false;
 		}
 		else
 		{
@@ -277,6 +285,7 @@ void UHBMovementComponent::WallRun(float _DeltaTime, FBodyInstance* _BodyInstanc
 	FVector oldWallNormalRight = UKismetMathLibrary::RotateAngleAxis(PreviousWallNormal, 90.0f, FVector::UpVector);
 
 	float wallAngleDelta = AngleBetweenTwoVectors(PreviousWallNormal, CollisionComponent->GetWallNormal());
+	bool RedirectVelocity = false;
 	if (FMath::Abs(wallAngleDelta) < 0.03f) wallAngleDelta = 0; //< Round down to account for small precision error in the formula. >
 
 	//< If delta exists, find rotation direction. >
@@ -285,13 +294,12 @@ void UHBMovementComponent::WallRun(float _DeltaTime, FBodyInstance* _BodyInstanc
 		//< Exit wallrun if hit a normal too different than our current surface. >
 		if (wallAngleDelta > 45.0f)
 		{
-			UE_LOG(LogTemp, Display, TEXT("Fell off Wallrun"));
 			StopWallRun(_BodyInstance, FVector::ZeroVector, false);
 			return;
 		}
 
 		wallAngleDelta *= (FVector::DotProduct(CollisionComponent->GetWallNormal(), oldWallNormalRight) < 0) ? -1 : 1;
-		UE_LOG(LogTemp, Display, TEXT("Added camera rotation: %f"), wallAngleDelta);
+		RedirectVelocity = true;
 	}
 
 	//< Set our target rotation change. >
@@ -302,8 +310,22 @@ void UHBMovementComponent::WallRun(float _DeltaTime, FBodyInstance* _BodyInstanc
 	wallrunDirection.Z = 0;
 	wallrunDirection = wallrunDirection.RotateAngleAxis((WallRunSide) ? 90 : -90, FVector::UpVector);
 
-	FVector targetVelocity = wallrunDirection.GetSafeNormal() * WallRunSpeed;
-	FVector deltaVel = (targetVelocity - NewVelocity);
+
+	FVector targetVelocity;
+	FVector deltaVel;
+
+	if (RedirectVelocity)
+	{
+		targetVelocity = wallrunDirection.GetSafeNormal() * GetCurrentHorizontalSpeed();
+		deltaVel = (targetVelocity - NewVelocity);
+	}
+	else
+	{
+		targetVelocity = wallrunDirection.GetSafeNormal() * WallRunSpeed;
+		deltaVel = (targetVelocity - NewVelocity);
+
+		deltaVel = deltaVel.GetClampedToSize(-WallRunAcceleration * _DeltaTime, WallRunAcceleration * _DeltaTime);
+	}
 
 	NewVelocity += deltaVel;
 
@@ -461,7 +483,7 @@ void UHBMovementComponent::StartWallRun(FBodyInstance* _BodyInstance)
 	WallRunActive = true;
 	WallrunFalloffTimeline = 0;
 	PreviousWallNormal = CollisionComponent->GetWallNormal();
-	WallRunSpeed = GetCurrentHorizontalSpeed();
+	CurrentWallRunSpeed = GetCurrentHorizontalSpeed();
 
 	UseGravity = false;
 	WallRunDelayTimer = 0;

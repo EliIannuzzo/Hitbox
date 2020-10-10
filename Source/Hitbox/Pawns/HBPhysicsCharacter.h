@@ -34,10 +34,10 @@ public:
 	//< CONFIGURATION >
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-		float CameraHeight = 70;
+		float CameraDepth = 15;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-		float SmoothedTargetRotationSpeed = 10;
+		float SmoothedTargetRotationSpeed = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta = (ClampMin = "1.0", ClampMax = "10.0", UIMin = "1.0", UIMax = "10.0"))
 		int MouseSensitivity = 5;
@@ -80,4 +80,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USceneComponent* ViewMountComponent;
+
+private:
+
+	float CalculateCameraHeight();
 };

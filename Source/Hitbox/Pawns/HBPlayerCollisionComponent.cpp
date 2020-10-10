@@ -82,7 +82,7 @@ void UHBPlayerCollisionComponent::TraceWall(FBodyInstance* _BodyInstance)
 	FHitResult outHitSphere;
 	FVector sphereEnd = start + FVector::UpVector;
 
-	if (GetWorld()->SweepSingleByChannel(outHitSphere, start, sphereEnd, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(CapsuleComponent->GetScaledCapsuleRadius() * 1.2f), CollisionParams))
+	if (GetWorld()->SweepSingleByChannel(outHitSphere, start, sphereEnd, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(CapsuleComponent->GetScaledCapsuleRadius() + WallNearDistance), CollisionParams))
 	{
 
 		//< Perform line trace using sphere trace impact point. This avoids the resulting impact normal being generated along the nearest edge. >

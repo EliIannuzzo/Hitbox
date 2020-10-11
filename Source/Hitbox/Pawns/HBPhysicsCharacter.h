@@ -37,7 +37,13 @@ public:
 		float CameraDepth = 15;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-		float SmoothedTargetRotationSpeed = 5;
+		float CameraPitchSpeed = 5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		float CameraYawSpeed = 5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		float CameraRollSpeed = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta = (ClampMin = "1.0", ClampMax = "10.0", UIMin = "1.0", UIMax = "10.0"))
 		int MouseSensitivity = 5;
@@ -62,6 +68,7 @@ private:
 	FVector2D MouseDelta = FVector2D::ZeroVector;
 
 	FVector2D ConsumeMouseInput();
+	FRotator CalculateAdditionalCameraRotation(float _DeltaTime);
 
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

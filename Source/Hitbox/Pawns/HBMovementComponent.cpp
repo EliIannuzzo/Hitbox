@@ -439,13 +439,13 @@ bool UHBMovementComponent::CanSlideBoost()
 
 void UHBMovementComponent::StickToGround(float _DeltaTime)
 {
-	FVector forceToApply = (CollisionComponent->GetGroundNormal() * -1.0f) * (StickToGroundForce + (NewVelocity.Size() / 10)) * 100.0f * _DeltaTime;
+	FVector forceToApply = (CollisionComponent->GetGroundNormal() * -1.0f) * (StickToGroundForce + (GetCurrentHorizontalSpeed() / 10)) * 100.0f * _DeltaTime;
 	NewVelocity += forceToApply;
 }
 
 void UHBMovementComponent::StickToWall(float _DeltaTime)
 {
-	FVector forceToApply = (CollisionComponent->GetWallNormal() * -1.0f) * StickToWallForce * _DeltaTime;
+	FVector forceToApply = (CollisionComponent->GetWallNormal() * -1.0f) * (StickToWallForce + (GetCurrentHorizontalSpeed() / 10)) * 100.0f * _DeltaTime;
 	NewVelocity += forceToApply;
 }
 
@@ -480,6 +480,8 @@ void UHBMovementComponent::StartWallRun(FBodyInstance* _BodyInstance)
 	FVector rightVector = _BodyInstance->GetUnrealWorldTransform().GetUnitAxis(EAxis::Y).GetSafeNormal();
 	WallRunSide = FVector::DotProduct(directionVector, rightVector) < 0;
 
+	TargetRotationDelta.Roll += (WallRunSide) ? -10 : 10;
+
 	WallRunActive = true;
 	WallrunFalloffTimeline = 0;
 	PreviousWallNormal = CollisionComponent->GetWallNormal();
@@ -510,6 +512,12 @@ void UHBMovementComponent::StopWallRun(FBodyInstance* _BodyInstance, FVector _Ex
 			NewVelocity = _ExitVelocity;
 		}
 	}
+
+	//< Reset camera roll. >
+	TargetRotationDelta.Roll += (WallRunSide) ? 10 : -10;
+
+	//< Cancel remaining camera yaw. >
+	TargetRotationDelta.Yaw = 0;
 
 	WallRunDelayTimer = WallRunDelay;
 

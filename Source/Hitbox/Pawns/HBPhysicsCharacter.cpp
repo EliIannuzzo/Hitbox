@@ -50,23 +50,17 @@ void AHBPhysicsCharacter::UpdateViewingAngle(float _DeltaTime)
 	FVector2D lastMouseDelta = ConsumeMouseInput();
 
 	//< Gather any additional rotations & account for some amount of that. >
-	FRotator targetRotationDelta = MovementComponent->GetTargetRotationDelta();
-	float multiplier = FMath::Clamp((float)(_DeltaTime * SmoothedTargetRotationSpeed), 0.0f, 1.0f);
-	float addedYaw = targetRotationDelta.Yaw * multiplier;
-
-	targetRotationDelta.Yaw -= addedYaw;
-	MovementComponent->SetTargetRotationDelta(targetRotationDelta);
+	FRotator additionalRot = CalculateAdditionalCameraRotation(_DeltaTime);
 
 	float horizontalDelta = (lastMouseDelta.X * 25 * MouseSensitivity) * _DeltaTime;
 	float verticalDelta = (lastMouseDelta.Y * 25 * MouseSensitivity) * _DeltaTime;
 
 	//< Rotate Camera (Vertical) >
 	float newPitch = FMath::Clamp(ViewMountComponent->GetRelativeRotation().Add(verticalDelta, 0, 0).Pitch, -85.0f, 85.0f);
-	ViewMountComponent->SetRelativeRotation(FRotator(newPitch, 0, 0), false, nullptr);
+	ViewMountComponent->SetRelativeRotation(FRotator(newPitch, 0, ViewMountComponent->GetRelativeRotation().Roll + additionalRot.Roll), false, nullptr);
 
 	//< Rotate Actor (Horizontal) >
-	AddActorWorldRotation(FRotator(0, horizontalDelta + addedYaw, 0), false);
-	UE_LOG(LogTemp, Display, TEXT("Added yaw: %f"), addedYaw);
+	AddActorWorldRotation(FRotator(0, horizontalDelta + additionalRot.Yaw, 0), false);
 }
 
 void AHBPhysicsCharacter::SetupPlayerInputComponent(UInputComponent* _PlayerInputComponent)
@@ -142,6 +136,23 @@ FVector2D AHBPhysicsCharacter::ConsumeMouseInput()
 	FVector2D LastMouseDelta = MouseDelta;
 	MouseDelta = FVector2D::ZeroVector;
 	return LastMouseDelta;
+}
+
+FRotator AHBPhysicsCharacter::CalculateAdditionalCameraRotation(float _DeltaTime)
+{
+	FRotator additionalRot = MovementComponent->GetTargetRotationDelta();
+
+	float pitch = additionalRot.Pitch	* FMath::Clamp((float)(_DeltaTime * CameraPitchSpeed),	0.0f, 1.0f);
+	float yaw	= additionalRot.Yaw		* FMath::Clamp((float)(_DeltaTime * CameraYawSpeed),	0.0f, 1.0f);
+	float roll	= additionalRot.Roll	* FMath::Clamp((float)(_DeltaTime * CameraRollSpeed),	0.0f, 1.0f);
+
+	additionalRot.Pitch -= pitch;
+	additionalRot.Yaw	-= yaw;
+	additionalRot.Roll	-= roll;
+
+	MovementComponent->SetTargetRotationDelta(additionalRot);
+
+	return FRotator(pitch, yaw, roll);
 }
 
 float AHBPhysicsCharacter::CalculateCameraHeight()

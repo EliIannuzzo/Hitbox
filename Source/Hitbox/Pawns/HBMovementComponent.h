@@ -58,18 +58,17 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Walking")
-		float WalkSpeed = 400;
-
+		float WalkSpeed = 575;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Running")
-		float RunSpeed = 600;
+		float RunSpeed = 800;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
-		float SlideForce = 850;
+		float SlideForce = 900;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
-		float CrouchSpeed = 200;
+		float CrouchSpeed = 250;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
 		UCurveFloat* CrouchCurve;
@@ -96,7 +95,7 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
-		float WallRunSpeed = 800;
+		float WallRunSpeed = 900;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		float WallRunAcceleration = 1000;

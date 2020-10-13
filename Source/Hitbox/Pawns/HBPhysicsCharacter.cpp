@@ -32,7 +32,7 @@ void AHBPhysicsCharacter::BeginPlay()
 
 void AHBPhysicsCharacter::OnConstruction(const FTransform& _Transform)
 {
-	ViewMountComponent->SetRelativeLocation(FVector(0, 0, CalculateCameraHeight()), false, nullptr, ETeleportType::TeleportPhysics);
+	UpdateCameraHeight();
 }
 
 void AHBPhysicsCharacter::Tick(float _DeltaTime)
@@ -40,7 +40,7 @@ void AHBPhysicsCharacter::Tick(float _DeltaTime)
 	Super::Tick(_DeltaTime);
 
 	UpdateViewingAngle(_DeltaTime);
-	ViewMountComponent->SetRelativeLocation(FVector(0, 0, CalculateCameraHeight()), false, nullptr, ETeleportType::TeleportPhysics);
+	UpdateCameraHeight();
 }
 
 void AHBPhysicsCharacter::UpdateViewingAngle(float _DeltaTime)
@@ -155,7 +155,17 @@ FRotator AHBPhysicsCharacter::CalculateAdditionalCameraRotation(float _DeltaTime
 	return FRotator(pitch, yaw, roll);
 }
 
-float AHBPhysicsCharacter::CalculateCameraHeight()
+void AHBPhysicsCharacter::UpdateCameraHeight()
 {
-	return MovementComponent->GetCollisionComponent()->CapsuleComponent->GetScaledCapsuleHalfHeight() - CameraDepth;
+	if (ViewMountComponent && MovementComponent && MovementComponent->GetCollisionComponent())
+	{
+		if (UCapsuleComponent* cc = MovementComponent->GetCollisionComponent()->CapsuleComponent)
+		{
+			float targetCameraHeight = MovementComponent->GetCollisionComponent()->CapsuleComponent->GetScaledCapsuleHalfHeight() - CameraDepth;
+			if (targetCameraHeight != ViewMountComponent->GetRelativeLocation().Z)
+			{
+				ViewMountComponent->SetRelativeLocation(FVector(0, 0, targetCameraHeight), false, nullptr, ETeleportType::TeleportPhysics);
+			}
+		}
+	}
 }

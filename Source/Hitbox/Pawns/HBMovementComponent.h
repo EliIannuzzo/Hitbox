@@ -26,6 +26,9 @@ public:
 	void Input_CrouchDown();
 	void Input_CrouchUp();
 
+	FRotator GetTargetRotationDelta() { return TargetRotationDelta; }
+	void SetTargetRotationDelta(FRotator _NewDelta) { TargetRotationDelta = _NewDelta; }
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
 		float PlayerRadius = 26;
@@ -76,7 +79,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|GroundMovement|Crouch&Slide")
 		float SlideDeceleration = 500;
 
+private:
+	bool PerformBoost = false;
+	float CrouchCurveTimeline = 0;
 
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|AirMovement")
 		float AirSpeed = 250;
 
@@ -109,6 +116,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		float WallJumpForce = 1000;
 
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		float WallRunDelay = 0.3f;
 
@@ -117,6 +125,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration|WallRunning")
 		UCurveFloat* WallrunFalloffCurve;
+
+private:
+	float WallrunFalloffTimeline = 0; // Tracks how far through the WallrunFalloffCurve we are. Will be necessary once we used that curve for wall height.
+	bool WallRunActive = false; // If currently performing a wall run.
+	bool WallRunSide = false; // false = left : true = right.
+	float CurrentWallRunSpeed = 0;
+	float WallRunDelayTimer = 0; // Min time before starting another wall run.
 
 private:
 	void GroundMove(float _DeltaTime, FBodyInstance* _BodyInstance);
@@ -142,10 +157,20 @@ private:
 	void TickCapsuleHeight(float _DeltaTime, FBodyInstance* _BodyInstance);
 
 	void ApplyFinalVelocity(FBodyInstance* _BodyInstance);
-	FVector NewVelocity;
 
 
-private: //< Helper Methods. >
+	FVector NewVelocity; //< Velocity to apply at the end of each sub step. >
+	FVector PreviousWallNormal = FVector::ZeroVector; //< Used to compare against current wall normal to find a rotation angle. > 
+
+	FRotator TargetRotationDelta = FRotator::ZeroRotator; 
+	//< Remaining character rotation for the HBPhysicsCharacter to account for, smoothly rotates when turning a corner if a wall run. 
+	// This functionality will be changed when camera functionality is moved into the HBCameraController class. >
+
+	bool Grounded = true; // true if near ground, jumping will set to false until you make contact with ground again.
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//< HELPERS >
+private: 
 	FVector2D FindVelRelativeToLook();
 	float AngleBetweenTwoVectors(FVector _A, FVector _B);
 
@@ -153,24 +178,7 @@ private: //< Helper Methods. >
 	FVector GetTranslation(FBodyInstance* _BodyInstance);
 
 	float GetCurrentHorizontalSpeed();
-
-public:
-	FRotator GetTargetRotationDelta() { return TargetRotationDelta; }
-	void SetTargetRotationDelta(FRotator _NewDelta) { TargetRotationDelta = _NewDelta; }
-
-private:
-	bool Grounded = true;
-	bool PerformBoost = false;
-	float CrouchCurveTimeline = 0;
-	float WallrunFalloffTimeline = 0;
-
-	bool WallRunActive = false;
-	bool WallRunSide = false; // false = left, true = right.
-	float CurrentWallRunSpeed = 0;
-	float WallRunDelayTimer = 0;
-
-	FVector PreviousWallNormal = FVector::ZeroVector;
-	FRotator TargetRotationDelta = FRotator::ZeroRotator;
+	
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< COMPONENTS >

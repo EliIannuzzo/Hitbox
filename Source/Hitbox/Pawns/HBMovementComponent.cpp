@@ -11,7 +11,7 @@ UHBMovementComponent::UHBMovementComponent(const FObjectInitializer& ObjectIniti
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
-	//<  >
+	//< Init player capsule size. >
 	CollisionComponent = CreateDefaultSubobject<UHBPlayerCollisionComponent>(TEXT("CollisionComponent"));
 	if (CollisionComponent->CapsuleComponent)
 	{
@@ -60,7 +60,7 @@ void UHBMovementComponent::SubstepTick(float _DeltaTime, FBodyInstance* _BodyIns
 	// If any "additional" physics frames get inserted,
 	// this function will get called multiple times
 
-	if (!_BodyInstance) return;
+	if (!_BodyInstance || !CollisionComponent) return;
 	if (UCapsuleComponent* cc = CollisionComponent->CapsuleComponent)
 	{
 		//< Update local copy of the velocity. >

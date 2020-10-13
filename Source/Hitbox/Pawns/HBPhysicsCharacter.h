@@ -22,12 +22,17 @@ public:
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& _Transform) override;
 
-	// Called every frame.
 	virtual void Tick(float _DeltaTime) override;
 	void UpdateViewingAngle(float _DeltaTime);
 
-	// Called to bind functionality to input.
 	virtual void SetupPlayerInputComponent(class UInputComponent* _PlayerInputComponent) override;
+
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//< Helpers >
+private:
+	void UpdateCameraHeight();
+	FRotator CalculateAdditionalCameraRotation(float _DeltaTime);
 
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,6 +53,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta = (ClampMin = "1.0", ClampMax = "10.0", UIMin = "1.0", UIMax = "10.0"))
 		int MouseSensitivity = 5;
 
+
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< INPUT >
 private:
@@ -66,16 +72,15 @@ private:
 
 
 	FVector2D MouseDelta = FVector2D::ZeroVector;
-
 	FVector2D ConsumeMouseInput();
-	FRotator CalculateAdditionalCameraRotation(float _DeltaTime);
 
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< COMPONENTS >
 public:
+	UHBMovementComponent*	GetMovementComponent()	{ return MovementComponent;		}
 	UCameraComponent*		GetCameraComponent()	{ return CameraComponent;		}
-	USceneComponent*		GetViewMountComponent()	{ return ViewMountComponent;	}
+	USceneComponent*		GetViewMountComponent() { return ViewMountComponent;	}
 
 private:
 	// Contains the Collision Component.
@@ -87,8 +92,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USceneComponent* ViewMountComponent;
-
-private:
-
-	float CalculateCameraHeight();
 };

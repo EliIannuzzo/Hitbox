@@ -3,8 +3,8 @@
 #include "HBPhysicsCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "HBMovementComponent.h"
+#include "HBCameraController.h"
 #include "HBPlayerCollisionComponent.h"
-#include "Camera/CameraComponent.h"
 #include "Components/SceneComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
@@ -18,11 +18,8 @@ AHBPhysicsCharacter::AHBPhysicsCharacter()
 	MovementComponent = CreateDefaultSubobject<UHBMovementComponent>(TEXT("MovementComponent"));
 	RootComponent = MovementComponent->GetCollisionComponent()->CapsuleComponent;
 
-	ViewMountComponent = CreateDefaultSubobject<USceneComponent>(TEXT("ViewMount"));
-	ViewMountComponent->SetupAttachment(RootComponent);
-
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	CameraComponent->SetupAttachment(ViewMountComponent);
+	CameraController = CreateDefaultSubobject<UHBCameraController>(TEXT("CameraController"));
+	CameraController->SetupAttachment(RootComponent);
 }
 
 void AHBPhysicsCharacter::BeginPlay()

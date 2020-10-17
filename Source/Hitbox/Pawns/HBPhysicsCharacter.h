@@ -10,6 +10,7 @@ class UCapsuleComponent;
 class UHBMovementComponent;
 class UCameraComponent;
 class USceneComponent;
+class UHBCameraController;
 
 UCLASS()
 class HITBOX_API AHBPhysicsCharacter : public APawn
@@ -86,6 +87,9 @@ private:
 	// Contains the Collision Component.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UHBMovementComponent* MovementComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		UHBCameraController* CameraController;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UCameraComponent* CameraComponent;

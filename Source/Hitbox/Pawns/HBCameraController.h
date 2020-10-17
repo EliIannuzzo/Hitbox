@@ -17,23 +17,27 @@ class HITBOX_API UHBCameraController : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	UHBCameraController();
+	void SetupAttachment(USceneComponent* InParent, FName InSocketName = NAME_None);
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		AHBPhysicsCharacter* Character;
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//< COMPONENTS >
+public:
+	UCameraComponent* GetCameraComponent()		{ return CameraComponent; }
+	USceneComponent* GetViewMountComponent()	{ return ViewMountComponent; }
+
+private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UCameraComponent* CameraComponent;
 

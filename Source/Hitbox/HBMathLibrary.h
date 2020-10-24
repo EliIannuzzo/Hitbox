@@ -12,8 +12,9 @@ class HITBOX_API UHBMathLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 public:
-	UHBMathLibrary();
-
+	UHBMathLibrary(const FObjectInitializer& ObjectInitializer);
 	virtual void BeginDestroy() override;
 
+
+	static FVector FlattenOnAxis(FVector _InVector, FVector _Axis);
 };

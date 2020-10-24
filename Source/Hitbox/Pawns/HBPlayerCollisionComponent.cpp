@@ -4,6 +4,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine.h"
 #include "DrawDebugHelpers.h"
+#include "../HBMathLibrary.h"
 
 // Sets default values for this component's properties
 UHBPlayerCollisionComponent::UHBPlayerCollisionComponent()
@@ -92,23 +93,13 @@ void UHBPlayerCollisionComponent::TraceWall(FBodyInstance* _BodyInstance)
 
 		if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECollisionChannel::ECC_Visibility, CollisionParams))
 		{
-			WallDistance	= FVector::Distance(FlattenOnAxis(start, FVector::UpVector), FlattenOnAxis(outHit.ImpactPoint, FVector::UpVector)) - CapsuleComponent->GetScaledCapsuleRadius();
+			WallDistance	= FVector::Distance(UHBMathLibrary::FlattenOnAxis(start, FVector::UpVector), UHBMathLibrary::FlattenOnAxis(outHit.ImpactPoint, FVector::UpVector)) - CapsuleComponent->GetScaledCapsuleRadius();
 			WallImpactPoint = outHit.ImpactPoint;
 			WallNormal		= outHit.ImpactNormal;
 			return;
 		}
 	}
-
 	WallDistance	= 9999;
 	WallImpactPoint = FVector::ZeroVector;
 	WallNormal		= FVector::ZeroVector;
-}
-
-FVector UHBPlayerCollisionComponent::FlattenOnAxis(FVector _InVector, FVector _Axis)
-{
-	FVector returnVector = _InVector;
-	FVector axisDelta = _InVector * _Axis;
-
-	returnVector += (_Axis.Size() > 0) ? -axisDelta : axisDelta;
-	return returnVector;
 }

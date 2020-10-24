@@ -30,12 +30,21 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void RotateAxisBy(FRotator _Axis, float _Rotation, bool _Lerp = true, bool _Additive = true);
+	void RotateAxisTo(FRotator _Axis, float _Rotation, bool _Lerp = true);
+
+private:
+	FRotator DeltaRot = FRotator::ZeroRotator;
+	FRotator TargetRot	= FRotator::ZeroRotator;
+
+	FRotator ActiveDeltaRotAxis = FRotator::ZeroRotator;
+	FRotator ActiveTargetRotAxis	= FRotator::ZeroRotator;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< COMPONENTS >
 public:
-	UCameraComponent* GetCameraComponent()		{ return CameraComponent; }
-	USceneComponent* GetViewMountComponent()	{ return ViewMountComponent; }
+	UCameraComponent* GetCameraComponent()		{ return CameraComponent;		}
+	USceneComponent* GetViewMountComponent()	{ return ViewMountComponent;	}
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

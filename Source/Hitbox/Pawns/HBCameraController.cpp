@@ -36,3 +36,23 @@ void UHBCameraController::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+void UHBCameraController::RotateAxisBy(FRotator _Axis, float _Rotation, bool _Lerp /*= true*/, bool _Additive /*= true*/)
+{
+	FRotator newRot = _Axis * _Rotation;
+
+	if (!_Lerp)
+	{
+		//< Set >
+	}
+
+	if (_Additive)
+	{
+		DeltaRot += newRot;
+	}
+}
+
+void UHBCameraController::RotateAxisTo(FRotator _Axis, float _Rotation, bool _Lerp /*= true*/)
+{
+
+}
+

@@ -55,7 +55,6 @@ public:
 private:
 	void TraceFloor(FBodyInstance* _BodyInstance);
 	void TraceWall(FBodyInstance* _BodyInstance);
-	FVector FlattenOnAxis(FVector _InVector, FVector _Axis);
 
 	FVector GroundNormal	= FVector::UpVector;
 	FVector WallNormal		= FVector::ZeroVector;

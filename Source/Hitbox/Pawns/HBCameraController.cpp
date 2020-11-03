@@ -29,29 +29,32 @@ void UHBCameraController::BeginPlay()
 	Super::BeginPlay();
 }
 
-
 // Called every frame
-void UHBCameraController::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UHBCameraController::TickComponent(float _DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	//< Tick delta rotation. >
+	FRotator deltaRot = DeltaRot * FMath::Clamp((float)(_DeltaTime * CameraRotationSpeed), 0.0f, 1.0f);
+	DeltaRot -= deltaRot;
+
+
+	MovementComponent->SetTargetRotationDelta(deltaRot);
+
+	return FRotator(pitch, yaw, roll);
+
+
+	//< Tick target rotation. >
 }
 
-void UHBCameraController::RotateAxisBy(FRotator _Axis, float _Rotation, bool _Lerp /*= true*/, bool _Additive /*= true*/)
+void UHBCameraController::RotateAxisBy(FRotator _Axis, float _Rotation, bool _Additive /*= true*/, UCurveFloat* _Curve /*= nullptr*/)
 {
+	//< Set remaining rotation. >
 	FRotator newRot = _Axis * _Rotation;
-
-	if (!_Lerp)
-	{
-		//< Set >
-	}
-
-	if (_Additive)
-	{
-		DeltaRot += newRot;
-	}
+	DeltaRot += (_Additive) ? (DeltaRot + newRot) : newRot;
 }
 
-void UHBCameraController::RotateAxisTo(FRotator _Axis, float _Rotation, bool _Lerp /*= true*/)
+void UHBCameraController::RotateAxisTo(FRotator _Axis, float _Rotation, UCurveFloat* _Curve /*= nullptr*/)
 {
 
 }

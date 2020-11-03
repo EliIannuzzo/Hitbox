@@ -9,8 +9,7 @@ UHBMathLibrary::UHBMathLibrary(const FObjectInitializer& ObjectInitializer)
 }
 
 void UHBMathLibrary::BeginDestroy()
-{
-
+{ 
 	Super::BeginDestroy();
 }
 

@@ -22,23 +22,25 @@ public:
 	UHBCameraController();
 	void SetupAttachment(USceneComponent* InParent, FName InSocketName = NAME_None);
 
+	// Called every frame
+	virtual void TickComponent(float _DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		FRotator CameraRotationSpeed = FRotator(5.0f, 5.0f, 5.0f);
 
-	void RotateAxisBy(FRotator _Axis, float _Rotation, bool _Lerp = true, bool _Additive = true);
-	void RotateAxisTo(FRotator _Axis, float _Rotation, bool _Lerp = true);
+
+	void RotateAxisBy(FRotator _Axis, float _Rotation, bool _Additive = true, UCurveFloat* _Curve = nullptr);
+	void RotateAxisTo(FRotator _Axis, float _Rotation, UCurveFloat* _Curve = nullptr);
 
 private:
 	FRotator DeltaRot = FRotator::ZeroRotator;
 	FRotator TargetRot	= FRotator::ZeroRotator;
 
-	FRotator ActiveDeltaRotAxis = FRotator::ZeroRotator;
-	FRotator ActiveTargetRotAxis	= FRotator::ZeroRotator;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//< COMPONENTS >
